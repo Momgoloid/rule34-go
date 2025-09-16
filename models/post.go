@@ -1,26 +1,42 @@
 package models
 
-type Post struct {
-	PreviewURL   string   `json:"preview_url"`
-	SampleURL    string   `json:"sample_url"`
-	FileURL      string   `json:"file_url"`
-	Directory    int      `json:"directory"`
-	Hash         string   `json:"hash"`
-	Width        int      `json:"width"`
-	Height       int      `json:"height"`
-	ID           int      `json:"id"`
-	Image        string   `json:"image"`
-	Change       int      `json:"change"`
-	Owner        string   `json:"owner"`
-	ParentID     int      `json:"parent_id"`
-	Rating       string   `json:"rating"`
-	Sample       bool     `json:"sample"`
-	SampleHeight int      `json:"sample_height"`
-	SampleWidth  int      `json:"sample_width"`
-	Score        int      `json:"score"`
-	Tags         []string `json:"tags"`
-	Source       string   `json:"source"`
-	Status       string   `json:"status"`
-	HasNotes     bool     `json:"has_notes"`
-	CommentCount int      `json:"comment_count"`
+import (
+	"encoding/xml"
+
+	"github.com/Momgoloid/rule34-go/internal/customXML"
+)
+
+const PostElementName = "post"
+
+type PostsXML struct {
+	XMLName xml.Name  `xml:"posts"`
+	Count   string    `xml:"count,attr"`
+	Offset  string    `xml:"offset,attr"`
+	Post    []PostXML `xml:"post"`
+}
+
+type PostXML struct {
+	Height        int                 `xml:"height,attr"`
+	Score         int                 `xml:"score,attr"`
+	FileURL       string              `xml:"file_url,attr"`
+	ParentID      string              `xml:"parent_id,attr"`
+	SampleURL     string              `xml:"sample_url,attr"`
+	SampleWidth   int                 `xml:"sample_width,attr"`
+	SampleHeight  int                 `xml:"sample_height,attr"`
+	PreviewURL    string              `xml:"preview_url,attr"`
+	Rating        string              `xml:"rating,attr"`
+	Tags          customXML.Tags      `xml:"tags,attr"`
+	ID            int                 `xml:"id,attr"`
+	Width         int                 `xml:"width,attr"`
+	Change        int                 `xml:"change,attr"`
+	Md5           string              `xml:"md5,attr"`
+	CreatorID     int                 `xml:"creator_id,attr"`
+	HasChildren   bool                `xml:"has_children,attr"`
+	CreatedAt     customXML.CreatedAt `xml:"created_at,attr"`
+	Status        string              `xml:"status,attr"`
+	Source        string              `xml:"source,attr"`
+	HasNotes      bool                `xml:"has_notes,attr"`
+	HasComments   bool                `xml:"has_comments,attr"`
+	PreviewWidth  int                 `xml:"preview_width,attr"`
+	PreviewHeight int                 `xml:"preview_height,attr"`
 }
