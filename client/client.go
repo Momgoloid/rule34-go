@@ -1,84 +1,46 @@
 package rule34
 
 import (
-	"bytes"
-	"encoding/xml"
 	"fmt"
 	"io"
 	"net/http"
-	"net/url"
-	"strconv"
-
-	"github.com/Momgoloid/rule34-go/models"
-)
-
-const (
-	baseURL = "https://api.rule34.xxx/index.php?page=dapi"
+	"time"
 )
 
 type Client struct {
-	UserID int
-	APIKey string
-	http.Client
+	UserID     string
+	APIKey     string
+	baseURL    string
+	httpClient *http.Client
 }
 
-func New(id int, apiKey string) *Client {
+func New(id string, apiKey string) *Client {
 	return &Client{
-		UserID: id,
-		APIKey: apiKey,
+		UserID:  id,
+		APIKey:  apiKey,
+		baseURL: "https://api.rule34.xxx/index.php?page=dapi&q=index",
+		httpClient: &http.Client{
+			Timeout: time.Second * 5,
+		},
 	}
 }
 
-func (c *Client) GetPost(postID int) (*models.PostXML, error) {
-	const fn = "client.GetPost"
-
-	post, err := c.getPost(postID)
-	if err != nil {
-		return nil, fmt.Errorf("%s: failed to get post: %v", fn, err)
+func (c *Client) Posts() *PostsRequestBuilder {
+	return &PostsRequestBuilder{
+		options: PostsOptions{
+			Tags:      make([]string, 0),
+			BlackList: make([]string, 0),
+		},
+		client: c,
 	}
-
-	return post, nil
 }
 
-func (c *Client) getPost(postID int) (*models.PostXML, error) {
-	getPostURL, err := c.buildGetPostURL(postID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to build get post url: %v", err)
-	}
+func (c *Client) Comments() {}
 
-	postBytes, err := c.doRequest(getPostURL)
-	if err != nil {
-		return nil, fmt.Errorf("failed to do request: %v", err)
-	}
-
-	post, err := unmarshalPost(postBytes)
-	if err != nil {
-		return nil, fmt.Errorf("failed to unmarshal post: %v", err)
-	}
-
-	return post, nil
-}
-
-func (c *Client) buildGetPostURL(postID int) (string, error) {
-	u, err := url.Parse(baseURL)
-	if err != nil {
-		return "", fmt.Errorf("can't parse base URL: %w", err)
-	}
-
-	q := u.Query()
-	q.Set("s", "post")
-	q.Set("q", "index")
-	q.Set("id", strconv.Itoa(postID))
-	q.Set("user_id", strconv.Itoa(c.UserID))
-	q.Set("api_key", c.APIKey)
-
-	u.RawQuery = q.Encode()
-
-	return u.String(), nil
-}
+func (c *Client) Tags() {}
 
 func (c *Client) doRequest(url string) ([]byte, error) {
-	resp, err := c.Get(url)
+	resp, err := c.httpClient.Get(url)
 	if err != nil {
 		return nil, fmt.Errorf("can't do request: %v", err)
 	}
@@ -93,30 +55,4 @@ func (c *Client) doRequest(url string) ([]byte, error) {
 	}
 
 	return body, nil
-}
-
-func unmarshalPost(postBytes []byte) (*models.PostXML, error) {
-	var (
-		posts models.PostsXML
-		post  models.PostXML
-	)
-
-	postData := bytes.NewBuffer(postBytes)
-
-	d := xml.NewDecoder(postData)
-
-	for t, _ := d.Token(); t != nil; t, _ = d.Token() {
-		switch se := t.(type) {
-		case xml.StartElement:
-			if se.Name.Local == models.PostElementName {
-				err := d.DecodeElement(&post, &se)
-				if err != nil {
-					return nil, fmt.Errorf("can't decode element: %v", err)
-				}
-				posts.Post = append(posts.Post, post)
-			}
-		}
-	}
-
-	return &posts.Post[0], nil
 }
