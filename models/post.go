@@ -3,19 +3,19 @@ package models
 import (
 	"encoding/xml"
 
-	"github.com/Momgoloid/rule34-go/internal/customXML"
+	"github.com/Momgoloid/rule34-go/customXML"
 )
 
 const PostElementName = "post"
 
-type PostsXML struct {
-	XMLName xml.Name  `xml:"posts"`
-	Count   string    `xml:"count,attr"`
-	Offset  string    `xml:"offset,attr"`
-	Post    []PostXML `xml:"post"`
+type Posts struct {
+	XMLName xml.Name `xml:"posts"`
+	Count   string   `xml:"count,attr"`
+	Offset  string   `xml:"offset,attr"`
+	Posts   []Post   `xml:"post"`
 }
 
-type PostXML struct {
+type Post struct {
 	Height        int                 `xml:"height,attr"`
 	Score         int                 `xml:"score,attr"`
 	FileURL       string              `xml:"file_url,attr"`
