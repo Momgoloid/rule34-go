@@ -8,6 +8,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/Momgoloid/rule34-go/client/filtering"
+	"github.com/Momgoloid/rule34-go/client/operators"
 	"github.com/Momgoloid/rule34-go/client/rating"
 	"github.com/Momgoloid/rule34-go/client/sorting"
 	"github.com/Momgoloid/rule34-go/models"
@@ -18,7 +20,9 @@ var (
 	ErrNonPositiveLimit           = errors.New("limit can't be less than or equal to zero")
 	ErrNonPositivePageNumber      = errors.New("page number can't be less than or equal to zero")
 	ErrUnknownRating              = errors.New("unknown rating was given")
-	ErrUnknownSortableType        = errors.New("unknown sortable type was given")
+	ErrUnknownSortingType         = errors.New("unknown sorting type was given")
+	ErrUnknownFilteringType       = errors.New("unknown filtering type was given")
+	ErrUnknownOperation           = errors.New("unknown operator was given")
 	ErrNonPositiveParentPostID    = errors.New("parent post id can't be less than or equal to zero")
 	ErrSortByWasNotCalled         = errors.New("sort by was not called")
 	ErrSortByWasCalledTwiceOrMore = errors.New("sort by was called twice or more")
@@ -33,17 +37,18 @@ type PostsRequestBuilder struct {
 }
 
 type PostsOptions struct {
-	PostID       int
-	Limit        int
-	PageNumber   int
-	Tags         []string
-	BlackList    []string
-	FilterAI     bool
-	Rating       rating.Rating
-	ParentPostID int
-	DoSort       bool
-	SortableType sorting.Type
-	SortingOrder string
+	PostID              int
+	Limit               int
+	PageNumber          int
+	Tags                []string
+	BlackList           []string
+	FilterAI            bool
+	Rating              rating.Rating
+	ParentPostID        int
+	FilteringConditions []filtering.Condition
+	DoSort              bool
+	SortableType        sorting.Type
+	SortingOrder        string
 }
 
 func (b *PostsRequestBuilder) PostID(postID int) *PostsRequestBuilder {
@@ -111,6 +116,28 @@ func (b *PostsRequestBuilder) ParentPostID(parentPostID int) *PostsRequestBuilde
 	return b
 }
 
+func (b *PostsRequestBuilder) Where(ft filtering.Type, op operators.Operator, arg int) *PostsRequestBuilder {
+	if !ft.IsValid() {
+		b.errors = append(b.errors, ErrUnknownFilteringType)
+		return b
+	}
+
+	if !op.IsValid() {
+		b.errors = append(b.errors, ErrUnknownOperation)
+		return b
+	}
+
+	filteringCondition := filtering.Condition{
+		FilteringType: ft,
+		Operation:    op,
+		Argument:      arg,
+	}
+
+	b.options.FilteringConditions = append(b.options.FilteringConditions, filteringCondition)
+
+	return b
+}
+
 func (b *PostsRequestBuilder) SortBy(sortableType sorting.Type) *PostsRequestBuilder {
 	if b.options.DoSort {
 		b.errors = append(b.errors, ErrSortByWasCalledTwiceOrMore)
@@ -118,7 +145,7 @@ func (b *PostsRequestBuilder) SortBy(sortableType sorting.Type) *PostsRequestBui
 	}
 
 	if !sortableType.IsValid() {
-		b.errors = append(b.errors, ErrUnknownSortableType)
+		b.errors = append(b.errors, ErrUnknownSortingType)
 		return b
 	}
 
@@ -169,10 +196,6 @@ func (b *PostsRequestBuilder) Find() (models.Posts, error) {
 	postsBytes, err := b.client.doRequest(url)
 	if err != nil {
 		return nil, fmt.Errorf("failed to do get posts request: %v", err)
-	}
-
-	if len(postsBytes) == 0 {
-		return models.Posts{}, ErrNotFound
 	}
 
 	posts, err := unmarshalPosts(postsBytes)
@@ -247,6 +270,12 @@ func (b *PostsRequestBuilder) convertTags() string {
 		sb.WriteString(fmt.Sprintf("parent:%s ", parentPostID))
 	}
 
+	if len(b.options.FilteringConditions) != 0 {
+		for _, fc := range b.options.FilteringConditions {
+			sb.WriteString(fmt.Sprintf("%s:%s%d ", fc.FilteringType, fc.Operation, fc.Argument))
+		}
+	}
+
 	if b.options.DoSort {
 		if b.options.SortingOrder != "" {
 			sb.WriteString(fmt.Sprintf("sort:%s:%s ", b.options.SortableType, b.options.SortingOrder))
@@ -259,6 +288,10 @@ func (b *PostsRequestBuilder) convertTags() string {
 }
 
 func unmarshalPosts(postsBytes []byte) (models.Posts, error) {
+	if len(postsBytes) == 0 {
+		return models.Posts{}, nil
+	}
+
 	var posts models.Posts
 
 	err := json.Unmarshal(postsBytes, &posts)
