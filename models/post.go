@@ -1,6 +1,6 @@
 package models
 
-import "github.com/Momgoloid/rule34-go/customTypes"
+import "github.com/Momgoloid69/rule34-go/customTypes"
 
 type Posts []Post
 

@@ -5,7 +5,7 @@ import (
 	"log"
 	"os"
 
-	rule34 "github.com/Momgoloid/rule34-go/client"
+	rule34 "github.com/Momgoloid69/rule34-go/client"
 	"github.com/joho/godotenv"
 )
 

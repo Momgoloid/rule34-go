@@ -8,11 +8,11 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/Momgoloid/rule34-go/client/filtering"
-	"github.com/Momgoloid/rule34-go/client/operators"
-	"github.com/Momgoloid/rule34-go/client/rating"
-	"github.com/Momgoloid/rule34-go/client/sorting"
-	"github.com/Momgoloid/rule34-go/models"
+	"github.com/Momgoloid69/rule34-go/client/filtering"
+	"github.com/Momgoloid69/rule34-go/client/operators"
+	"github.com/Momgoloid69/rule34-go/client/rating"
+	"github.com/Momgoloid69/rule34-go/client/sorting"
+	"github.com/Momgoloid69/rule34-go/models"
 )
 
 var (
@@ -129,7 +129,7 @@ func (b *PostsRequestBuilder) Where(ft filtering.Type, op operators.Operator, ar
 
 	filteringCondition := filtering.Condition{
 		FilteringType: ft,
-		Operation:    op,
+		Operation:     op,
 		Argument:      arg,
 	}
 
