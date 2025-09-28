@@ -1,4 +1,4 @@
-package customXML
+package customTypes
 
 import (
 	"encoding/xml"
