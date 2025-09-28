@@ -1,8 +1,7 @@
 package rule34
 
 import (
-	"bytes"
-	"encoding/xml"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/url"
@@ -10,17 +9,28 @@ import (
 	"strings"
 
 	"github.com/Momgoloid/rule34-go/client/rating"
+	"github.com/Momgoloid/rule34-go/client/sorting"
 	"github.com/Momgoloid/rule34-go/models"
 )
 
 var (
-	ErrNonPositivePostID       = errors.New("post id can't be less than or equal to zero")
-	ErrNonPositiveLimit        = errors.New("limit can't be less than or equal to zero")
-	ErrNonPositivePageNumber   = errors.New("page number can't be less than or equal to zero")
-	ErrUnknownRating           = errors.New("unknown rating was given")
-	ErrNonPositiveParentPostID = errors.New("parent post id can't be less than or equal to zero")
-	// ErrNegativeScore           = errors.New("score can't be negative")
+	ErrNonPositivePostID          = errors.New("post id can't be less than or equal to zero")
+	ErrNonPositiveLimit           = errors.New("limit can't be less than or equal to zero")
+	ErrNonPositivePageNumber      = errors.New("page number can't be less than or equal to zero")
+	ErrUnknownRating              = errors.New("unknown rating was given")
+	ErrUnknownSortableType        = errors.New("unknown sortable type was given")
+	ErrNonPositiveParentPostID    = errors.New("parent post id can't be less than or equal to zero")
+	ErrSortByWasNotCalled         = errors.New("sort by was not called")
+	ErrSortByWasCalledTwiceOrMore = errors.New("sort by was called twice or more")
+	ErrTwoSortingOrders           = errors.New("both sorting orders was used")
+	ErrNotFound                   = errors.New("no posts was found")
 )
+
+type PostsRequestBuilder struct {
+	options PostsOptions
+	client  *Client
+	errors  []error
+}
 
 type PostsOptions struct {
 	PostID       int
@@ -31,13 +41,9 @@ type PostsOptions struct {
 	FilterAI     bool
 	Rating       rating.Rating
 	ParentPostID int
-	// Score        int
-}
-
-type PostsRequestBuilder struct {
-	options PostsOptions
-	client  *Client
-	errors  []error
+	DoSort       bool
+	SortableType sorting.Type
+	SortingOrder string
 }
 
 func (b *PostsRequestBuilder) PostID(postID int) *PostsRequestBuilder {
@@ -86,7 +92,7 @@ func (b *PostsRequestBuilder) FilterAI() *PostsRequestBuilder {
 }
 
 func (b *PostsRequestBuilder) Rating(r rating.Rating) *PostsRequestBuilder {
-	if r.String() == "" {
+	if !r.IsValid() {
 		b.errors = append(b.errors, ErrUnknownRating)
 		return b
 	}
@@ -105,17 +111,51 @@ func (b *PostsRequestBuilder) ParentPostID(parentPostID int) *PostsRequestBuilde
 	return b
 }
 
-// func (b *PostsRequestBuilder) Score(score int) *PostsRequestBuilder {
-// 	if score < 0 {
-// 		b.errors = append(b.errors, ErrNegativeScore)
-// 		return b
-// 	}
+func (b *PostsRequestBuilder) SortBy(sortableType sorting.Type) *PostsRequestBuilder {
+	if b.options.DoSort {
+		b.errors = append(b.errors, ErrSortByWasCalledTwiceOrMore)
+		return b
+	}
 
-// 	b.options.Score = score
-// 	return b
-// }
+	if !sortableType.IsValid() {
+		b.errors = append(b.errors, ErrUnknownSortableType)
+		return b
+	}
 
-func (b *PostsRequestBuilder) Find() (*models.Posts, error) {
+	b.options.DoSort = true
+	b.options.SortableType = sortableType
+	return b
+}
+
+func (b *PostsRequestBuilder) Asc() *PostsRequestBuilder {
+	if !b.checkDoSort() {
+		return b
+	}
+
+	if b.options.SortingOrder != "" {
+		b.errors = append(b.errors, ErrTwoSortingOrders)
+		return b
+	}
+
+	b.options.SortingOrder = "asc"
+	return b
+}
+
+func (b *PostsRequestBuilder) Desc() *PostsRequestBuilder {
+	if !b.checkDoSort() {
+		return b
+	}
+
+	if b.options.SortingOrder != "" {
+		b.errors = append(b.errors, ErrTwoSortingOrders)
+		return b
+	}
+
+	b.options.SortingOrder = "desc"
+	return b
+}
+
+func (b *PostsRequestBuilder) Find() (models.Posts, error) {
 	if len(b.errors) != 0 {
 		err := errors.Join(b.errors...)
 		return nil, fmt.Errorf("invalid arguments: %v", err)
@@ -129,6 +169,10 @@ func (b *PostsRequestBuilder) Find() (*models.Posts, error) {
 	postsBytes, err := b.client.doRequest(url)
 	if err != nil {
 		return nil, fmt.Errorf("failed to do get posts request: %v", err)
+	}
+
+	if len(postsBytes) == 0 {
+		return models.Posts{}, ErrNotFound
 	}
 
 	posts, err := unmarshalPosts(postsBytes)
@@ -175,6 +219,8 @@ func (b *PostsRequestBuilder) addOptions(q *url.Values) {
 
 	q.Set("user_id", b.client.UserID)
 	q.Set("api_key", b.client.APIKey)
+
+	q.Set("json", "1")
 }
 
 func (b *PostsRequestBuilder) convertTags() string {
@@ -192,8 +238,8 @@ func (b *PostsRequestBuilder) convertTags() string {
 		sb.WriteString("-ai_generated ")
 	}
 
-	if b.options.Rating != 0 {
-		sb.WriteString(fmt.Sprintf("rating:%s ", b.options.Rating.String()))
+	if b.options.Rating != "" {
+		sb.WriteString(fmt.Sprintf("rating:%s ", b.options.Rating))
 	}
 
 	parentPostID := strconv.Itoa(b.options.ParentPostID)
@@ -201,35 +247,33 @@ func (b *PostsRequestBuilder) convertTags() string {
 		sb.WriteString(fmt.Sprintf("parent:%s ", parentPostID))
 	}
 
-	// if b.options.Score != 0 {
-	// 	sb.WriteString(fmt.Sprintf(" score: "))
-	// }
+	if b.options.DoSort {
+		if b.options.SortingOrder != "" {
+			sb.WriteString(fmt.Sprintf("sort:%s:%s ", b.options.SortableType, b.options.SortingOrder))
+		} else {
+			sb.WriteString(fmt.Sprintf("sort:%s:desc ", b.options.SortableType))
+		}
+	}
 
 	return sb.String()
 }
 
-func unmarshalPosts(postsBytes []byte) (*models.Posts, error) {
-	var (
-		posts models.Posts
-		post  models.Post
-	)
+func unmarshalPosts(postsBytes []byte) (models.Posts, error) {
+	var posts models.Posts
 
-	postData := bytes.NewBuffer(postsBytes)
-
-	d := xml.NewDecoder(postData)
-
-	for t, _ := d.Token(); t != nil; t, _ = d.Token() {
-		switch se := t.(type) {
-		case xml.StartElement:
-			if se.Name.Local == models.PostElementName {
-				err := d.DecodeElement(&post, &se)
-				if err != nil {
-					return nil, fmt.Errorf("can't decode element: %v", err)
-				}
-				posts.Posts = append(posts.Posts, post)
-			}
-		}
+	err := json.Unmarshal(postsBytes, &posts)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal posts: %v", err)
 	}
 
-	return &posts, nil
+	return posts, nil
+}
+
+func (b *PostsRequestBuilder) checkDoSort() bool {
+	if !b.options.DoSort {
+		b.errors = append(b.errors, ErrSortByWasNotCalled)
+		return false
+	}
+
+	return true
 }
