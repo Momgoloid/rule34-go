@@ -1,14 +1,20 @@
 package rating
 
-type Rating int
+type Rating string
 
 const (
-	None Rating = iota
-	Safe
-	Questionable
-	Explicit
+	Safe         Rating = "safe"
+	Questionable Rating = "questionable"
+	Explicit     Rating = "explicit"
 )
 
-func (r Rating) String() string {
-	return []string{"", "safe", "questionable", "explicit"}[r]
+var ValidRatings = map[Rating]struct{}{
+	Safe:         {},
+	Questionable: {},
+	Explicit:     {},
+}
+
+func (r Rating) IsValid() bool {
+	_, ok := ValidRatings[r]
+	return ok
 }
