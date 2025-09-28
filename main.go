@@ -13,12 +13,12 @@ func main() {
 	userID, apiKey := MustLoad()
 	rule34 := rule34.New(userID, apiKey)
 
-	post, err := rule34.Posts().Find()
+	posts, err := rule34.Posts().Find()
 	if err != nil {
 		log.Fatalf("internal error: %v", err)
 	}
 
-	fmt.Println(post.Posts)
+	fmt.Println(posts)
 }
 
 func MustLoad() (string, string) {
