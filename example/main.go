@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/Momgoloid69/rule34-go/rule34"
+	"github.com/Momgoloid69/rule34-go/v2/rule34"
 )
 
 // main is the entry point for the example application.
