@@ -1,9 +1,14 @@
+// Package models defines the data structures that map to the API's responses.
 package models
 
 import "github.com/Momgoloid69/rule34-go/customTypes/unmarshaling"
 
+// Posts is a slice of Post objects, representing a collection of posts
+// returned by the API, typically in JSON format.
 type Posts []Post
 
+// Post represents a single post object and its associated metadata.
+// The struct tags map the JSON keys from the API response to the fields.
 type Post struct {
 	PreviewURL   string            `json:"preview_url"`
 	SampleURL    string            `json:"sample_url"`
@@ -22,7 +27,7 @@ type Post struct {
 	SampleHeight int               `json:"sample_height"`
 	SampleWidth  int               `json:"sample_width"`
 	Score        int               `json:"score"`
-	Tags         unmarshaling.Tags `json:"tags"`
+	Tags         unmarshaling.Tags `json:"tags"` // Custom type to handle space-separated string
 	Source       string            `json:"source"`
 	Status       string            `json:"status"`
 	HasNotes     bool              `json:"has_notes"`

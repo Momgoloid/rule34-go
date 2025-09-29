@@ -1,3 +1,4 @@
+// Package rule34 provides a client for interacting with the rule34.xxx API.
 package rule34
 
 import (
@@ -7,6 +8,8 @@ import (
 	"time"
 )
 
+// Client represents a client for the rule34.xxx API.
+// It holds user credentials and an HTTP client to perform requests.
 type Client struct {
 	UserID     string
 	APIKey     string
@@ -14,6 +17,8 @@ type Client struct {
 	httpClient *http.Client
 }
 
+// New creates a new instance of the rule34 client.
+// It requires a user ID and an API key for authentication.
 func New(id string, apiKey string) *Client {
 	return &Client{
 		UserID:  id,
@@ -25,6 +30,8 @@ func New(id string, apiKey string) *Client {
 	}
 }
 
+// Posts returns a PostsRequestBuilder for building a request to fetch posts.
+// This builder allows for chaining methods to specify query parameters like tags, limits, etc.
 func (c *Client) Posts() *PostsRequestBuilder {
 	return &PostsRequestBuilder{
 		options: PostsOptions{
@@ -35,10 +42,16 @@ func (c *Client) Posts() *PostsRequestBuilder {
 	}
 }
 
+// Comments is intended to return a CommentRequestBuilder for fetching comments.
+// TODO: implement
 func (c *Client) Comments() {}
 
+// Tags is intended to return a TagRequestBuilder for fetching tags.
+// TODO: implement
 func (c *Client) Tags() {}
 
+// doRequest performs an HTTP GET request to the specified URL. It returns an
+// error for non-200 status codes, network issues, or problems reading the response body.
 func (c *Client) doRequest(url string) ([]byte, error) {
 	resp, err := c.httpClient.Get(url)
 	if err != nil {
