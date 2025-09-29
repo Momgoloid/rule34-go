@@ -36,7 +36,7 @@ The rule34.xxx API requires a `userID` and `apiKey` for authenticated requests. 
 Then, create a new client instance:
 
 ```go
-import rule34 "github.com/Momgoloid69/rule34-go/client"
+import rule34 "github.com/Momgoloid69/rule34-go/rule34"
 
 func main() {
     userID := "YOUR_USER_ID"
@@ -63,7 +63,7 @@ import (
 	"fmt"
 	"log"
 
-	rule34 "github.com/Momgoloid69/rule34-go/client"
+	rule34 "github.com/Momgoloid69/rule34-go/rule34"
 )
 
 func main() {
@@ -98,11 +98,11 @@ import (
 	"fmt"
 	"log"
 
-	rule34 "github.com/Momgoloid69/rule34-go/client"
-	"github.com/Momgoloid69/rule34-go/client/filtering"
-	"github.com/Momgoloid69/rule34-go/client/operators"
-	"github.com/Momgoloid69/rule34-go/client/rating"
-	"github.com/Momgoloid69/rule34-go/client/sorting"
+	rule34 "github.com/Momgoloid69/rule34-go/rule34"
+	"github.com/Momgoloid69/rule34-go/rule34/filtering"
+	"github.com/Momgoloid69/rule34-go/rule34/operators"
+	"github.com/Momgoloid69/rule34-go/rule34/rating"
+	"github.com/Momgoloid69/rule34-go/rule34/sorting"
 )
 
 func main() {

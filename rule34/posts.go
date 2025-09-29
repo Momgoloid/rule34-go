@@ -8,12 +8,6 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
-
-	"github.com/Momgoloid69/rule34-go/customTypes/filtering"
-	"github.com/Momgoloid69/rule34-go/customTypes/operators"
-	"github.com/Momgoloid69/rule34-go/customTypes/rating"
-	"github.com/Momgoloid69/rule34-go/customTypes/sorting"
-	"github.com/Momgoloid69/rule34-go/models"
 )
 
 // Pre-defined errors for the PostsRequestBuilder.
@@ -57,11 +51,11 @@ type PostsOptions struct {
 	Tags                []string
 	BlackList           []string
 	FilterAI            bool
-	Rating              rating.Rating
+	Rating              Rating
 	ParentPostID        int
-	FilteringConditions []filtering.Condition
+	FilteringConditions []Condition
 	DoSort              bool
-	SortableType        sorting.Type
+	SortableType        SortableType
 	SortingOrder        string
 }
 
@@ -120,7 +114,7 @@ func (b *PostsRequestBuilder) FilterAI() *PostsRequestBuilder {
 }
 
 // Rating sets the content rating for the search.
-func (b *PostsRequestBuilder) Rating(r rating.Rating) *PostsRequestBuilder {
+func (b *PostsRequestBuilder) Rating(r Rating) *PostsRequestBuilder {
 	if !r.IsValid() {
 		b.errors = append(b.errors, ErrUnknownRating)
 		return b
@@ -142,8 +136,8 @@ func (b *PostsRequestBuilder) ParentPostID(parentPostID int) *PostsRequestBuilde
 }
 
 // Where adds a filtering condition to the request.
-// For example, Where(filtering.Score, operators.GreaterEqual, 10) finds posts with a score >= 10.
-func (b *PostsRequestBuilder) Where(ft filtering.Type, op operators.Operator, arg int) *PostsRequestBuilder {
+// For example, Where(FilterByScore, GreaterEqual, 10) finds posts with a score >= 10.
+func (b *PostsRequestBuilder) Where(ft FilterType, op Operator, arg int) *PostsRequestBuilder {
 	if !ft.IsValid() {
 		b.errors = append(b.errors, ErrUnknownFilteringType)
 		return b
@@ -154,7 +148,7 @@ func (b *PostsRequestBuilder) Where(ft filtering.Type, op operators.Operator, ar
 		return b
 	}
 
-	filteringCondition := filtering.Condition{
+	filteringCondition := Condition{
 		FilteringType: ft,
 		Operation:     op,
 		Argument:      arg,
@@ -167,7 +161,7 @@ func (b *PostsRequestBuilder) Where(ft filtering.Type, op operators.Operator, ar
 
 // SortBy specifies the field to sort the results by.
 // Must be called before Asc() or Desc(). Defaults to descending order if neither is called.
-func (b *PostsRequestBuilder) SortBy(sortableType sorting.Type) *PostsRequestBuilder {
+func (b *PostsRequestBuilder) SortBy(sortableType SortableType) *PostsRequestBuilder {
 	if b.options.DoSort {
 		b.errors = append(b.errors, ErrSortByWasCalledTwiceOrMore)
 		return b
@@ -217,7 +211,7 @@ func (b *PostsRequestBuilder) Desc() *PostsRequestBuilder {
 
 // Find executes the request to the API and returns the search results.
 // It first validates any accumulated errors, then builds the URL, performs the request, and unmarshals the response.
-func (b *PostsRequestBuilder) Find() (models.Posts, error) {
+func (b *PostsRequestBuilder) Find() (Posts, error) {
 	if len(b.errors) != 0 {
 		err := errors.Join(b.errors...)
 		return nil, fmt.Errorf("invalid arguments: %v", err)
@@ -326,12 +320,12 @@ func (b *PostsRequestBuilder) convertTags() string {
 }
 
 // unmarshalPosts parses the JSON response body into a slice of Post models.
-func unmarshalPosts(postsBytes []byte) (models.Posts, error) {
+func unmarshalPosts(postsBytes []byte) (Posts, error) {
 	if len(postsBytes) == 0 {
-		return models.Posts{}, nil
+		return Posts{}, nil
 	}
 
-	var posts models.Posts
+	var posts Posts
 
 	err := json.Unmarshal(postsBytes, &posts)
 	if err != nil {
