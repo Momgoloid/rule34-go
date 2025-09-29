@@ -1,7 +1,7 @@
 # rule34-go
 
-[![Go Report Card](https://goreportcard.com/badge/github.com/Momgoloid69/rule34-go)](https://goreportcard.com/report/github.com/Momgoloid69/rule34-go)
-[![GoDoc](https://godoc.org/github.com/Momgoloid69/rule34-go?status.svg)](https://godoc.org/github.com/Momgoloid69/rule34-go)
+[![Go Report Card](https://goreportcard.com/badge/github.com/Momgoloid69/rule34-go/v2)](https://goreportcard.com/report/github.com/Momgoloid69/rule34-go/v2)
+[![GoDoc](https://godoc.org/github.com/Momgoloid69/rule34-go/v2?status.svg)](https://godoc.org/github.com/Momgoloid69/rule34-go/v2)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 `rule34-go` is an unofficial Go client library for interacting with the `rule34.xxx` API. It provides a simple and fluent interface for searching and retrieving posts.
@@ -24,7 +24,7 @@ This library is a client for an API that serves Not Safe For Work (NSFW) / adult
 To install the library, use `go get`:
 
 ```bash
-go get github.com/Momgoloid69/rule34-go
+go get github.com/Momgoloid69/rule34-go/v2
 ```
 
 ## Authentication
@@ -36,7 +36,7 @@ The rule34.xxx API requires a `userID` and `apiKey` for authenticated requests. 
 Then, create a new client instance:
 
 ```go
-import rule34 "github.com/Momgoloid69/rule34-go/rule34"
+import rule34 "github.com/Momgoloid69/rule34-go/v2/rule34"
 
 func main() {
     userID := "YOUR_USER_ID"
@@ -63,7 +63,7 @@ import (
 	"fmt"
 	"log"
 
-	rule34 "github.com/Momgoloid69/rule34-go/rule34"
+	rule34 "github.com/Momgoloid69/rule34-go/v2/rule34"
 )
 
 func main() {
@@ -98,11 +98,7 @@ import (
 	"fmt"
 	"log"
 
-	rule34 "github.com/Momgoloid69/rule34-go/rule34"
-	"github.com/Momgoloid69/rule34-go/rule34/filtering"
-	"github.com/Momgoloid69/rule34-go/rule34/operators"
-	"github.com/Momgoloid69/rule34-go/rule34/rating"
-	"github.com/Momgoloid69/rule34-go/rule34/sorting"
+	rule34 "github.com/Momgoloid69/rule34-go/v2/rule34"
 )
 
 func main() {
@@ -117,9 +113,9 @@ func main() {
 		Limit(10).
 		Tags("breasts", "looking_at_viewer").
 		BlackList("solo").
-		Rating(rating.Questionable).
-		Where(filtering.Score, operators.GreaterEqual, 50).
-		SortBy(sorting.Score).Desc().
+		Rating(rule34.Questionable).
+		Where(rule34.Score, rule34.GreaterEqual, 50).
+		SortBy(rule34.Score).Desc().
 		Find()
 
 	if err != nil {
