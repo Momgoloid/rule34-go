@@ -8,10 +8,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/Momgoloid69/rule34-go/client/filtering"
-	"github.com/Momgoloid69/rule34-go/client/operators"
-	"github.com/Momgoloid69/rule34-go/client/rating"
-	"github.com/Momgoloid69/rule34-go/client/sorting"
+	"github.com/Momgoloid69/rule34-go/customTypes/filtering"
+	"github.com/Momgoloid69/rule34-go/customTypes/operators"
+	"github.com/Momgoloid69/rule34-go/customTypes/rating"
+	"github.com/Momgoloid69/rule34-go/customTypes/sorting"
 	"github.com/Momgoloid69/rule34-go/models"
 )
 

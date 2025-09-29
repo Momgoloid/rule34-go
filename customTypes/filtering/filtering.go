@@ -1,6 +1,6 @@
 package filtering
 
-import "github.com/Momgoloid69/rule34-go/client/operators"
+import "github.com/Momgoloid69/rule34-go/customTypes/operators"
 
 type Condition struct {
 	FilteringType Type

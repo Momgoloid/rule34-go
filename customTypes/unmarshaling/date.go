@@ -1,4 +1,4 @@
-package customTypes
+package unmarshaling
 
 import (
 	"encoding/xml"
